@@ -1,53 +1,103 @@
 angular.module('editInPlace', [ ])
-.directive( 'editInPlace', function($compile, $parse) {
+.directive( 'editInPlace', , function($compile, $parse) {
+        var cssClass = 'edit-in-place';
+
         return {
             restrict: 'A',
             scope: { model: '=editInPlace' },
-            template: '<span ng-bind="model"></span><input ng-model="model" type="text" class="edit-in-place__input" />',
-            compile: function(tElement, tAttrs) {
-                var $input = tElement.children('.edit-in-place__input'),
-                    inputId = 'edit-in-place-' + ~~(Math.random() * Date.now());
+            template: function($tElement, tAttrs) {
+                var template,
+                    common = 'class="' + cssClass + '__input"';
                 
-                $input.attr('id', inputId);
-                
-                if(tAttrs.label) {
-                    var $label = angular.element('<label for="' + inputId + '" class="edit-in-place__label"></label>');
-                    
-                    $label.insertBefore($input);
+                if(tAttrs.inputType === 'textarea') {
+                    template = '<textarea ' + common + '></textarea>';
+                } else {
+                    template = '<input type="' + (tAttrs.inputType || 'text') + '" ' + common + '/>';
                 }
                 
+                if(tAttrs.label) {
+                    template += '<label class="' + cssClass + '__label"></label>';
+                }
+                
+                return template + '<span class="' + cssClass + '__value" ng-bind="model"></span>';
+            },
+            compile: function($tElement, tAttrs) {
+                $tElement.addClass(cssClass);
+
+                var inputId = cssClass + '--' + Math.round(Math.random() * Date.now());
+
+                $tElement.children('.' + cssClass + '__input').attr('id', inputId);
+                $tElement.children('.' + cssClass + '__label').attr('for', inputId);
+
                 return function(scope, $element, attrs) {
                     scope.editing = false;
-    
-                    var $input = $element.children('.edit-in-place__input');
-                    $input
-                        .hide()
-                        .on('blur', function() {
-                            $input.hide();
 
-                            scope.editing = false;
-                        });
-                        
+                    function _activate() {
+                        $element
+                            .removeClass(cssClass)
+                            .addClass(cssClass + '--active');
+
+                        $input.focus();
+
+                        scope.editing = true;
+                    }
+
+
+                    function _deactivate() {
+                        $element
+                            .removeClass(cssClass + '--active')
+                            .addClass(cssClass);
+
+                        scope.editing = false;
+                    }
+
+                // prepare input >>
+                    var $input = $element.children('.' + cssClass + '__input');
+
+                    // all or no directives for input element must be defined in linking function
+                    /* if you, ex. define ng-model directive in template and then recompile element
+                       in linking function, model will be bound twice and you can see some glitches,
+                       like cursor fleeing to end of input after typing character
+                    */
+                    $input.attr('ng-model', 'model');
                     if(attrs.inputAttrs) {
                         angular.forEach($parse(attrs.inputAttrs)(scope.$parent), function(attrValue, attrName) {
                             $input.attr(attrName, attrValue);
                         });
-                        
-                        $compile($input[0])(scope, function(scope, cloned) {
-                           // $element.append(cloned);
-                        });
-                        
                     }
+
+                    $compile($input)(scope);
+
+                    $input
+                        .on('blur', function() {
+                            _deactivate();
+                        });
+                // << prepare input
+
+
+                    if(!attrs.defaultActive) {
+                        _deactivate();
+                    } else {
+                        _activate();
+                    }
+
+
+                    var $label = $element.children('.' + cssClass + '__label');
+                    if($label.length) {
+                        $label.text(attrs.label);
+                    }
+
     
                     $element
-                        .addClass('edit-in-place')
+                        .addClass('' + cssClass + '')
                         .on('click', function(e) {
-                            e.preventDefault();
+                            if(!scope.editing) { // prevents calls in edit mode
+                                e.preventDefault();
+                                
+                                _activate();
     
-                            $input.show();
-                            $input.focus();
-    
-                            scope.editing = true;
+                                scope.editing = true;
+                            }
                         });
                 };
             }
