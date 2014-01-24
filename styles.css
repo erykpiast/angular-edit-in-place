@@ -1,0 +1,42 @@
+.edit-in-place {
+	cursor: pointer;
+	min-width: 1em; 
+	position: relative;
+
+	&:before { // prevents hiding input when no text
+		color: transparent;
+		content: "|";
+		display: inline-block;
+		transform: translateX(-0.001px);
+		width: 0.001px;
+	}
+}
+	.edit-in-place--active {
+		@extend .edit-in-place;
+
+		.edit-in-place__input {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	}
+
+	.edit-in-place__input {
+		border: none;
+		bottom: 0;
+		box-shadow: 0px 0px 1px 1px #000 inset;
+		box-sizing: border-box;
+		cursor: auto;
+		font: inherit;
+		font-family: inherit;
+		font-weight: inherit;
+		display: inline-block;
+		left: 0;
+		line-height: inherit;
+		opacity: 0;
+		outline: none;
+		padding: inherit;
+		position: absolute;
+		pointer-events: none;
+		top: 0;
+		width: 100%;
+	}
