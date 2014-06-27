@@ -1,4 +1,4 @@
-angular-editinplace
+angular-edit-in-place
 ===================
 
 Simple edit-in-place directive for Angular.js
